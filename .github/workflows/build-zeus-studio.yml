@@ -1,0 +1,52 @@
+name: Build Zeus Studio
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Zeus Studio APK
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Show Gradle version
+        run: ./gradlew --version
+
+      - name: Clean
+        run: ./gradlew clean
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --stacktrace
+
+      - name: Locate APK
+        run: |
+          echo "=== APK files ==="
+          find app/build/outputs/apk \
+            -type f \
+            -name "*.apk" \
+            -print
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZeusStudio-debug
+          path: app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
