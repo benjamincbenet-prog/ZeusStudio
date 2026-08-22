@@ -18,23 +18,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Make Gradle executable
-        run: chmod +x gradlew
+      - name: Set up Gradle 8.13.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13.1'
 
-      - name: Show Gradle version
-        run: ./gradlew --version
+      - name: Verify Java
+        run: |
+          java -version
 
-      - name: Clean
-        run: ./gradlew clean
+      - name: Verify Gradle
+        run: |
+          gradle --version
 
-      - name: Build debug APK
-        run: ./gradlew :app:assembleDebug --stacktrace
+      - name: Build Zeus Studio
+        run: |
+          gradle :app:assembleDebug --stacktrace
 
       - name: Locate APK
         run: |
