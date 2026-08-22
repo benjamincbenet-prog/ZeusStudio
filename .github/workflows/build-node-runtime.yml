@@ -12,12 +12,23 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+
+      # --------------------------------------------------
+      # Checkout repository
+      # --------------------------------------------------
+
       - name: Checkout
         uses: actions/checkout@v4
+
+
+      # --------------------------------------------------
+      # Install required tools
+      # --------------------------------------------------
 
       - name: Install tools
         run: |
           sudo apt-get update
+
           sudo apt-get install -y \
             curl \
             wget \
@@ -27,10 +38,20 @@ jobs:
             gzip \
             xz-utils
 
+
+      # --------------------------------------------------
+      # Create directories
+      # --------------------------------------------------
+
       - name: Create runtime directories
         run: |
           mkdir -p runtime/build
           mkdir -p runtime/package
+
+
+      # --------------------------------------------------
+      # Download Termux ARM64 Node
+      # --------------------------------------------------
 
       - name: Download Node ARM64 package
         run: |
@@ -38,10 +59,20 @@ jobs:
             "https://packages.termux.dev/apt/termux-main/pool/main/n/nodejs/nodejs_26.4.0-1_aarch64.deb" \
             -o runtime/build/nodejs.deb
 
+
+      # --------------------------------------------------
+      # Verify downloaded package
+      # --------------------------------------------------
+
       - name: Verify Node package
         run: |
           echo "eaf3ed8a6e4b72ebaa8c2cb3bad778c577cdf9ea87ca91761213d8a3940fc090  runtime/build/nodejs.deb" \
             | sha256sum -c -
+
+
+      # --------------------------------------------------
+      # Extract Node package
+      # --------------------------------------------------
 
       - name: Extract Node package
         run: |
@@ -50,6 +81,11 @@ jobs:
           dpkg-deb -x \
             runtime/build/nodejs.deb \
             runtime/build/rootfs
+
+
+      # --------------------------------------------------
+      # Inspect runtime
+      # --------------------------------------------------
 
       - name: Inspect runtime
         run: |
@@ -75,11 +111,42 @@ jobs:
             \( -name "*.so" -o -name "*.so.*" \) \
             | sort
 
+
+      # --------------------------------------------------
+      # Prepare Node executable for Zeus Studio
+      # --------------------------------------------------
+
+      - name: Prepare Node for Zeus Studio
+        run: |
+          mkdir -p app/src/main/assets
+
+          cp \
+            runtime/build/rootfs/data/data/com.termux/files/usr/bin/node \
+            app/src/main/assets/node
+
+          chmod 644 app/src/main/assets/node
+
+          echo "=== Zeus Studio Node ==="
+
+          file app/src/main/assets/node
+
+          ls -lh app/src/main/assets/node
+
+
+      # --------------------------------------------------
+      # Create runtime archive
+      # --------------------------------------------------
+
       - name: Create runtime archive
         run: |
           tar -czf \
             runtime/package/zeus-node-runtime-android-arm64.tar.gz \
             -C runtime/build/rootfs .
+
+
+      # --------------------------------------------------
+      # Generate SHA256
+      # --------------------------------------------------
 
       - name: Generate SHA256
         run: |
@@ -89,11 +156,32 @@ jobs:
             zeus-node-runtime-android-arm64.tar.gz \
             > zeus-node-runtime-android-arm64.sha256
 
+
+      # --------------------------------------------------
+      # Upload Node executable as GitHub artifact
+      # --------------------------------------------------
+
+      - name: Upload Node asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: zeus-node-android-arm64
+          path: app/src/main/assets/node
+
+
+      # --------------------------------------------------
+      # Verify runtime archive
+      # --------------------------------------------------
+
       - name: Verify runtime archive
         run: |
           tar -tzf \
             runtime/package/zeus-node-runtime-android-arm64.tar.gz \
             | head -100
+
+
+      # --------------------------------------------------
+      # Delete previous runtime release
+      # --------------------------------------------------
 
       - name: Delete existing release
         run: |
@@ -103,6 +191,11 @@ jobs:
             || true
         env:
           GH_TOKEN: ${{ github.token }}
+
+
+      # --------------------------------------------------
+      # Create GitHub runtime release
+      # --------------------------------------------------
 
       - name: Create runtime release
         run: |
