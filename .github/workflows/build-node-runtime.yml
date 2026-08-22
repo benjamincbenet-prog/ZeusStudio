@@ -48,6 +48,20 @@ jobs:
             runtime/build/nodejs.deb \
             runtime/build/rootfs
 
+      - name: Locate Node executable
+        run: |
+          echo "Node executables:"
+          find runtime/build/rootfs \
+            -type f \
+            \( -name node -o -name nodejs \) \
+            -exec file {} \;
+
+          echo
+          echo "Package contents:"
+          find runtime/build/rootfs -maxdepth 4 -type f | sort
+
+
+
       - name: Show runtime
         run: |
           find runtime/build/rootfs -maxdepth 5 -type f | sort
@@ -57,6 +71,12 @@ jobs:
           tar -czf \
             runtime/package/zeus-node-runtime-android-arm64.tar.gz \
             -C runtime/build/rootfs .
+
+      - name: Verify runtime archive
+        run: |
+          tar -tzf \
+            runtime/package/zeus-node-runtime-android-arm64.tar.gz \
+            | head -100
 
       - name: Generate SHA256
         run: |
