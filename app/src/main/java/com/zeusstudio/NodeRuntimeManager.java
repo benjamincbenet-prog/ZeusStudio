@@ -385,24 +385,15 @@ public class NodeRuntimeManager {
     }
 
     private void extractTarGz(
-            File archive,
-            File destination
-    ) throws IOException {
+        File archive,
+        File destination
+) throws IOException {
 
-        /*
-         * Java's standard library does not contain
-         * a TAR reader. We deliberately don't use
-         * native C/C++ here.
-         *
-         * This method will be replaced with our
-         * small pure-Java TAR/GZIP extractor in
-         * the next step.
-         */
-
-        throw new IOException(
-                "TAR extraction not implemented yet"
-        );
-    }
+    TarGzExtractor.extract(
+            archive,
+            destination
+    );
+}
 
     private void deleteRecursive(
             File file
