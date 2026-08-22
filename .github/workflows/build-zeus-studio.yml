@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Zeus Studio APK
+    name: Build Zeus Studio
     runs-on: ubuntu-24.04
 
     steps:
@@ -23,27 +23,23 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
-      - name: Set up Gradle 8.13.1
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.13.1'
+      - name: Make Gradle executable
+        run: chmod +x gradlew
 
-      - name: Verify Java
-        run: |
-          java -version
+      - name: Show Java version
+        run: java -version
 
-      - name: Verify Gradle
-        run: |
-          gradle --version
+      - name: Show Gradle version
+        run: ./gradlew --version
 
       - name: Build Zeus Studio
-        run: |
-          gradle :app:assembleDebug --stacktrace
+        run: ./gradlew assembleDebug --stacktrace
 
-      - name: Locate APK
+      - name: Find APK
         run: |
-          echo "=== APK files ==="
+          echo "=== APK OUTPUT ==="
           find app/build/outputs/apk \
             -type f \
             -name "*.apk" \
