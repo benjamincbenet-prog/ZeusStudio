@@ -1,0 +1,59 @@
+name: Test Zeus Node Runtime
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test Android ARM64 Runtime
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            curl \
+            dpkg-dev \
+            file \
+            tar \
+            gzip \
+            xz-utils
+
+      - name: Download Node package
+        run: |
+          mkdir -p test/rootfs
+
+          curl -L \
+            "https://packages.termux.dev/apt/termux-main/pool/main/n/nodejs/nodejs_26.4.0-1_aarch64.deb" \
+            -o test/nodejs.deb
+
+      - name: Verify checksum
+        run: |
+          echo "eaf3ed8a6e4b72ebaa8c2cb3bad778c577cdf9ea87ca91761213d8a3940fc090  test/nodejs.deb" \
+            | sha256sum -c -
+
+      - name: Extract package
+        run: |
+          dpkg-deb -x \
+            test/nodejs.deb \
+            test/rootfs
+
+      - name: Inspect Node
+        run: |
+          find test/rootfs -type f | sort
+
+      - name: Inspect executables
+        run: |
+          find test/rootfs -type f \
+            \( -name node -o -name npm \) \
+            -exec file {} \;
+
+      - name: Inspect libraries
+        run: |
+          find test/rootfs -type f \
+            \( -name "*.so" -o -name "*.so.*" \) \
+            | sort
