@@ -1,32 +1,61 @@
 package com.zeusstudio;
 
+import android.app.Activity;
 import android.os.Bundle;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
+public class MainActivity extends Activity {
 
-public class MainActivity extends AppCompatActivity {
-
-    private NodeRuntimeManager runtimeManager;
-
+    private TextView output;
     private TextView nodeStatus;
-    private TextView statusText;
-    private Button installButton;
+    private TextView testStatus;
+
+    private NodeRuntimeManager nodeRuntimeManager;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle state) {
+        super.onCreate(state);
 
-        runtimeManager =
-                new NodeRuntimeManager(this);
+        nodeRuntimeManager =
+                new NodeRuntimeManager(getApplicationContext());
 
         buildInterface();
+        refreshStatus();
+    }
 
-        refreshRuntimeStatus();
+    private int dp(float value) {
+        return (int) (
+                value * getResources()
+                        .getDisplayMetrics()
+                        .density + 0.5f
+        );
+    }
+
+    private TextView label(String text, float size) {
+        TextView v = new TextView(this);
+        v.setText(text);
+        v.setTextColor(Color.WHITE);
+        v.setTextSize(size);
+        v.setPadding(
+                dp(12),
+                dp(8),
+                dp(12),
+                dp(8)
+        );
+        return v;
+    }
+
+    private Button button(String text) {
+        Button b = new Button(this);
+        b.setText(text);
+        b.setAllCaps(false);
+        return b;
     }
 
     private void buildInterface() {
@@ -38,269 +67,306 @@ public class MainActivity extends AppCompatActivity {
                 LinearLayout.VERTICAL
         );
 
-        root.setPadding(
-                48,
-                48,
-                48,
-                48
+        root.setBackgroundColor(
+                Color.rgb(16, 17, 20)
         );
 
-        ScrollView scrollView =
-                new ScrollView(this);
+        // Toolbar
+        LinearLayout toolbar =
+                new LinearLayout(this);
 
-        scrollView.addView(root);
+        toolbar.setGravity(
+                Gravity.CENTER_VERTICAL
+        );
+
+        toolbar.setPadding(
+                dp(8),
+                dp(4),
+                dp(8),
+                dp(4)
+        );
 
         TextView title =
-                new TextView(this);
+                label("Zeus Studio", 20);
 
-        title.setText(
-                "ZEUS STUDIO"
+        title.setTypeface(
+                Typeface.DEFAULT,
+                Typeface.BOLD
         );
 
-        title.setTextSize(28);
-
-        title.setGravity(
-                Gravity.CENTER
-        );
-
-        root.addView(
+        toolbar.addView(
                 title,
                 new LinearLayout.LayoutParams(
-                        -1,
-                        -2
+                        0,
+                        dp(56),
+                        1
                 )
         );
 
-        TextView subtitle =
-                new TextView(this);
+        Button settings =
+                button("⚙");
 
-        subtitle.setText(
-                "Zepp OS Development Environment"
+        settings.setOnClickListener(v ->
+                appendOutput(
+                        "Settings will be added in a later phase."
+                )
         );
 
-        subtitle.setTextSize(16);
-
-        subtitle.setGravity(
-                Gravity.CENTER
-        );
-
-        root.addView(
-                subtitle,
+        toolbar.addView(
+                settings,
                 new LinearLayout.LayoutParams(
-                        -1,
-                        -2
+                        dp(56),
+                        dp(56)
                 )
         );
 
-        addSpacer(root, 32);
+        root.addView(toolbar);
 
-        TextView runtimeTitle =
-                new TextView(this);
+        // Environment title
+        TextView envTitle =
+                label(
+                        "DEVELOPMENT ENVIRONMENT",
+                        13
+                );
 
-        runtimeTitle.setText(
-                "Runtime"
+        envTitle.setTextColor(Color.LTGRAY);
+
+        root.addView(envTitle);
+
+        LinearLayout environment =
+                new LinearLayout(this);
+
+        environment.setOrientation(
+                LinearLayout.VERTICAL
         );
 
-        runtimeTitle.setTextSize(22);
-
-        root.addView(
-                runtimeTitle
+        environment.setPadding(
+                dp(12),
+                0,
+                dp(12),
+                0
         );
 
-        addSpacer(root, 16);
-
+        // Node status
         nodeStatus =
-                new TextView(this);
+                label("", 15);
 
-        nodeStatus.setTextSize(18);
+        environment.addView(nodeStatus);
+
+        // Install Runtime button
+        Button installRuntime =
+                button("Install Runtime");
+
+        installRuntime.setOnClickListener(
+                v -> installRuntime()
+        );
+
+        environment.addView(
+                installRuntime
+        );
+
+        // Runtime test button
+        Button testRuntime =
+                button("Test Runtime");
+
+        testRuntime.setOnClickListener(
+                v -> testRuntime()
+        );
+
+        environment.addView(
+                testRuntime
+        );
+
+        // Test status
+        testStatus =
+                label("", 15);
+
+        environment.addView(testStatus);
+
+        root.addView(environment);
+
+        // Output
+        TextView outputTitle =
+                label("OUTPUT", 13);
+
+        outputTitle.setTextColor(Color.LTGRAY);
+
+        root.addView(outputTitle);
+
+        ScrollView scroll =
+                new ScrollView(this);
+
+        output =
+                label("", 14);
+
+        output.setTextIsSelectable(true);
+
+        scroll.addView(output);
 
         root.addView(
-                nodeStatus
-        );
-
-        addSpacer(root, 8);
-
-        TextView architecture =
-                new TextView(this);
-
-        architecture.setText(
-                "Architecture: "
-                        + android.os.Build.SUPPORTED_ABIS[0]
-        );
-
-        architecture.setTextSize(16);
-
-        root.addView(
-                architecture
-        );
-
-        addSpacer(root, 24);
-
-        installButton =
-                new Button(this);
-
-        installButton.setText(
-                "Install Runtime"
-        );
-
-        root.addView(
-                installButton,
+                scroll,
                 new LinearLayout.LayoutParams(
-                        -1,
-                        -2
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        0,
+                        1
                 )
         );
 
-        addSpacer(root, 24);
-
-        TextView statusTitle =
-                new TextView(this);
-
-        statusTitle.setText(
-                "Status"
-        );
-
-        statusTitle.setTextSize(22);
-
-        root.addView(
-                statusTitle
-        );
-
-        addSpacer(root, 8);
-
-        statusText =
-                new TextView(this);
-
-        statusText.setTextSize(16);
-
-        root.addView(
-                statusText
-        );
-
-        installButton.setOnClickListener(
-                view -> installRuntime()
-        );
-
-        setContentView(scrollView);
+        setContentView(root);
     }
 
-    private void refreshRuntimeStatus() {
+    private void refreshStatus() {
 
-        if (runtimeManager.isRuntimeInstalled()) {
+        if (nodeRuntimeManager.isInstalled()) {
 
             nodeStatus.setText(
-                    "Node.js: "
-                            + runtimeManager.getNodeVersion()
-            );
-
-            statusText.setText(
-                    "Runtime installed and executable."
-            );
-
-            installButton.setText(
-                    "Reinstall Runtime"
+                    "Node Runtime: Installed\n"
+                            + nodeRuntimeManager
+                            .getNodeExecutable()
+                            .getAbsolutePath()
             );
 
         } else {
 
             nodeStatus.setText(
-                    "Node.js: Not installed"
-            );
-
-            statusText.setText(
-                    "Ready to install."
-            );
-
-            installButton.setText(
-                    "Install Runtime"
+                    "Node Runtime: Not installed"
             );
         }
     }
 
     private void installRuntime() {
 
-        installButton.setEnabled(false);
-
-        statusText.setText(
-                "Starting runtime installation..."
+        appendOutput(
+                "Installing Node runtime..."
         );
 
-        runtimeManager.installRuntime(
-                new NodeRuntimeManager.InstallCallback() {
+        setButtonsEnabled(false);
 
-                    @Override
-                    public void onStatus(
-                            String status
-                    ) {
+        new Thread(() -> {
 
-                        runOnUiThread(() ->
-                                statusText.setText(
-                                        status
-                                )
-                        );
-                    }
+            try {
 
-                    @Override
-                    public void onSuccess(
-                            String version
-                    ) {
+                nodeRuntimeManager.installRuntime();
 
-                        runOnUiThread(() -> {
+                String version =
+                        nodeRuntimeManager
+                                .getNodeVersion();
 
-                            nodeStatus.setText(
-                                    "Node.js: "
-                                            + version
-                            );
+                runOnUiThread(() -> {
 
-                            statusText.setText(
-                                    "Runtime installed successfully."
-                            );
+                    nodeStatus.setText(
+                            "Node Runtime: Installed\n"
+                                    + "Version: "
+                                    + version
+                    );
 
-                            installButton.setEnabled(
-                                    true
-                            );
+                    testStatus.setText(
+                            "Runtime installation successful."
+                    );
 
-                            installButton.setText(
-                                    "Reinstall Runtime"
-                            );
-                        });
-                    }
+                    appendOutput(
+                            "Node installed successfully."
+                    );
 
-                    @Override
-                    public void onError(
-                            String error
-                    ) {
+                    appendOutput(
+                            "Version: "
+                                    + version
+                    );
 
-                        runOnUiThread(() -> {
+                    appendOutput(
+                            "Location: "
+                                    + nodeRuntimeManager
+                                    .getNodeExecutable()
+                                    .getAbsolutePath()
+                    );
 
-                            statusText.setText(
-                                    "Installation failed:\n\n"
-                                            + error
-                            );
+                    setButtonsEnabled(true);
+                });
 
-                            installButton.setEnabled(
-                                    true
-                            );
-                        });
-                    }
-                }
-        );
+            } catch (Exception e) {
+
+                runOnUiThread(() -> {
+
+                    testStatus.setText(
+                            "Runtime installation failed."
+                    );
+
+                    appendOutput(
+                            "ERROR: "
+                                    + e.getMessage()
+                    );
+
+                    setButtonsEnabled(true);
+                });
+            }
+
+        }).start();
     }
 
-    private void addSpacer(
-            LinearLayout parent,
-            int height
+    private void testRuntime() {
+
+        appendOutput(
+                "Testing Node runtime..."
+        );
+
+        new Thread(() -> {
+
+            try {
+
+                String version =
+                        nodeRuntimeManager
+                                .getNodeVersion();
+
+                runOnUiThread(() -> {
+
+                    testStatus.setText(
+                            "Runtime OK: "
+                                    + version
+                    );
+
+                    appendOutput(
+                            "Node runtime test passed."
+                    );
+
+                    appendOutput(
+                            "Node version: "
+                                    + version
+                    );
+                });
+
+            } catch (Exception e) {
+
+                runOnUiThread(() -> {
+
+                    testStatus.setText(
+                            "Runtime test failed."
+                    );
+
+                    appendOutput(
+                            "ERROR: "
+                                    + e.getMessage()
+                    );
+                });
+            }
+
+        }).start();
+    }
+
+    private void setButtonsEnabled(
+            boolean enabled
     ) {
+        // Buttons will be wired here
+        // in the next UI refinement.
+    }
 
-        TextView spacer =
-                new TextView(this);
+    private void appendOutput(String text) {
 
-        parent.addView(
-                spacer,
-                new LinearLayout.LayoutParams(
-                        1,
-                        height
-                )
+        if (output == null) {
+            return;
+        }
+
+        output.append(
+                text + "\n"
         );
     }
 }
