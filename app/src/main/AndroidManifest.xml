@@ -5,6 +5,7 @@
 
     <application
         android:allowBackup="true"
+        android:theme="@style/ZeusTheme"
         android:label="Zeus Studio"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
