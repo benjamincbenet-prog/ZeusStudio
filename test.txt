@@ -1,0 +1,21 @@
+Package: nodejs
+Installed-Size: 50488
+Maintainer: Yaksh Bariya <thunder-coding@termux.dev>
+Architecture: aarch64
+Version: 26.4.0-1
+Replaces: nodejs-current, nodejs-dev
+Depends: libc++, openssl, c-ares, libicu, libsqlite, zlib, libffi
+Recommends: npm
+Suggests: clang, make, pkg-config, python
+Conflicts: nodejs-lts, nodejs-current
+Breaks: nodejs-dev
+Filename: pool/main/n/nodejs/nodejs_26.4.0-1_aarch64.deb
+Size: 10349280
+MD5sum: cd42e62fe4902eebe4b1fe452945dfdc
+SHA1: 64f2ec32e846bbf941c10f4653a0103f7d664413
+SHA256: eaf3ed8a6e4b72ebaa8c2cb3bad778c577cdf9ea87ca91761213d8a3940fc090
+SHA512: 52c7628017440995aa671b2cd623bc3bad75a38ed392f0ac8a43a10073d5367e8130dd60011663e4fa45373668898cdcc9e26cf7bf6870115b4f1198c80a74cd
+Description: Open Source, cross-platform JavaScript runtime environment
+Homepage: https://nodejs.org/
+
+Package: nodejs-lts

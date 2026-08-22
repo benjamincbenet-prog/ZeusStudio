@@ -1,0 +1,21 @@
+# Android/Gradle
+.gradle/
+build/
+*/build/
+.cxx/
+.externalNativeBuild/
+
+# CodeOnTheGo
+.idea/
+*.iml
+
+# Local SDK/environment
+local.properties
+
+# Generated files
+captures/
+.externalNativeBuild/
+
+# OS files
+.DS_Store
+Thumbs.db

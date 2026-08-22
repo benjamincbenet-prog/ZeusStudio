@@ -1,0 +1,21 @@
+{
+  "allFiles": [
+    {
+      "file": "/storage/emulated/0/CodeOnTheGoProjects/ZeusStudio/app/src/main/cpp/native-lib.cpp",
+      "selection": {
+        "end": {
+          "column": 1,
+          "index": 1702,
+          "line": 76
+        },
+        "start": {
+          "column": 1,
+          "index": 1702,
+          "line": 76
+        }
+      }
+    }
+  ],
+  "projectPath": "/storage/emulated/0/CodeOnTheGoProjects/ZeusStudio",
+  "selectedFile": "/storage/emulated/0/CodeOnTheGoProjects/ZeusStudio/app/src/main/cpp/native-lib.cpp"
+}
