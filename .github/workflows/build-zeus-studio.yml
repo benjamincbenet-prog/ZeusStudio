@@ -15,8 +15,114 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+
+      # --------------------------------------------------
+      # Checkout
+      # --------------------------------------------------
+
       - name: Checkout
         uses: actions/checkout@v4
+
+
+      # --------------------------------------------------
+      # Install runtime build tools
+      # --------------------------------------------------
+
+      - name: Install runtime tools
+        run: |
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            curl \
+            wget \
+            dpkg-dev \
+            file \
+            tar \
+            gzip \
+            xz-utils
+
+
+      # --------------------------------------------------
+      # Create runtime directories
+      # --------------------------------------------------
+
+      - name: Create runtime directories
+        run: |
+          mkdir -p runtime/build
+          mkdir -p runtime/package
+          mkdir -p app/src/main/assets
+
+
+      # --------------------------------------------------
+      # Download Android ARM64 Node
+      # --------------------------------------------------
+
+      - name: Download Node ARM64 package
+        run: |
+          curl -L \
+            "https://packages.termux.dev/apt/termux-main/pool/main/n/nodejs/nodejs_26.4.0-1_aarch64.deb" \
+            -o runtime/build/nodejs.deb
+
+
+      # --------------------------------------------------
+      # Verify Node package
+      # --------------------------------------------------
+
+      - name: Verify Node package
+        run: |
+          echo "eaf3ed8a6e4b72ebaa8c2cb3bad778c577cdf9ea87ca91761213d8a3940fc090  runtime/build/nodejs.deb" \
+            | sha256sum -c -
+
+
+      # --------------------------------------------------
+      # Extract Node
+      # --------------------------------------------------
+
+      - name: Extract Node package
+        run: |
+          mkdir -p runtime/build/rootfs
+
+          dpkg-deb -x \
+            runtime/build/nodejs.deb \
+            runtime/build/rootfs
+
+
+      # --------------------------------------------------
+      # Copy Node into Android assets
+      # --------------------------------------------------
+
+      - name: Prepare Node asset
+        run: |
+          cp \
+            runtime/build/rootfs/data/data/com.termux/files/usr/bin/node \
+            app/src/main/assets/node
+
+          chmod 644 app/src/main/assets/node
+
+          echo "=== Zeus Studio Node ==="
+          file app/src/main/assets/node
+          ls -lh app/src/main/assets/node
+
+
+      # --------------------------------------------------
+      # Verify Node architecture
+      # --------------------------------------------------
+
+      - name: Verify Node architecture
+        run: |
+          file app/src/main/assets/node
+
+          if ! file app/src/main/assets/node | grep -q "ARM aarch64"; then
+            echo "ERROR: Node is not ARM64 Android."
+            exit 1
+          fi
+
+          echo "Node ARM64 verification passed."
+
+
+      # --------------------------------------------------
+      # Set up JDK 17
+      # --------------------------------------------------
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -25,25 +131,70 @@ jobs:
           java-version: '17'
           cache: gradle
 
+
+      # --------------------------------------------------
+      # Make Gradle executable
+      # --------------------------------------------------
+
       - name: Make Gradle executable
         run: chmod +x gradlew
+
+
+      # --------------------------------------------------
+      # Show Java version
+      # --------------------------------------------------
 
       - name: Show Java version
         run: java -version
 
+
+      # --------------------------------------------------
+      # Show Gradle version
+      # --------------------------------------------------
+
       - name: Show Gradle version
         run: ./gradlew --version
 
+
+      # --------------------------------------------------
+      # Confirm Node is present before Gradle
+      # --------------------------------------------------
+
+      - name: Confirm APK Node asset
+        run: |
+          echo "=== APK Node asset ==="
+
+          ls -lh app/src/main/assets/node
+
+          file app/src/main/assets/node
+
+
+      # --------------------------------------------------
+      # Build Zeus Studio
+      # --------------------------------------------------
+
       - name: Build Zeus Studio
-        run: ./gradlew assembleDebug --stacktrace
+        run: |
+          ./gradlew assembleDebug --stacktrace
+
+
+      # --------------------------------------------------
+      # Find APK
+      # --------------------------------------------------
 
       - name: Find APK
         run: |
           echo "=== APK OUTPUT ==="
+
           find app/build/outputs/apk \
             -type f \
             -name "*.apk" \
             -print
+
+
+      # --------------------------------------------------
+      # Upload APK
+      # --------------------------------------------------
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
