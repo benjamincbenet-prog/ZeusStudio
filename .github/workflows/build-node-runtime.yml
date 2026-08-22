@@ -91,3 +91,24 @@ jobs:
           path: |
             runtime/package/zeus-node-runtime-android-arm64.tar.gz
             runtime/package/zeus-node-runtime-android-arm64.sha256
+
+      - name: Inspect runtime
+        run: |
+          echo "=== Node executable ==="
+          find runtime/build/rootfs \
+            -type f \
+            \( -name node -o -name nodejs \) \
+            -exec file {} \;
+
+          echo
+          echo "=== Runtime files ==="
+          find runtime/build/rootfs \
+            -type f \
+            | sort
+
+          echo
+          echo "=== Shared libraries ==="
+          find runtime/build/rootfs \
+            -type f \
+            \( -name "*.so" -o -name "*.so.*" \) \
+            | sort
