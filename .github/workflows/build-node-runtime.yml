@@ -3,6 +3,9 @@ name: Build Zeus Node Runtime
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   runtime:
     name: Build Android ARM64 Runtime
@@ -48,53 +51,10 @@ jobs:
             runtime/build/nodejs.deb \
             runtime/build/rootfs
 
-      - name: Locate Node executable
-        run: |
-          echo "Node executables:"
-          find runtime/build/rootfs \
-            -type f \
-            \( -name node -o -name nodejs \) \
-            -exec file {} \;
-
-          echo
-          echo "Package contents:"
-          find runtime/build/rootfs -maxdepth 4 -type f | sort
-
-
-
-      - name: Show runtime
-        run: |
-          find runtime/build/rootfs -maxdepth 5 -type f | sort
-
-      - name: Create runtime archive
-        run: |
-          tar -czf \
-            runtime/package/zeus-node-runtime-android-arm64.tar.gz \
-            -C runtime/build/rootfs .
-
-      - name: Verify runtime archive
-        run: |
-          tar -tzf \
-            runtime/package/zeus-node-runtime-android-arm64.tar.gz \
-            | head -100
-
-      - name: Generate SHA256
-        run: |
-          cd runtime/package
-          sha256sum zeus-node-runtime-android-arm64.tar.gz \
-            > zeus-node-runtime-android-arm64.sha256
-
-      - name: Upload runtime
-        uses: actions/upload-artifact@v4
-        with:
-          name: zeus-node-runtime-android-arm64
-          path: |
-            runtime/package/zeus-node-runtime-android-arm64.tar.gz
-            runtime/package/zeus-node-runtime-android-arm64.sha256
-
       - name: Inspect runtime
         run: |
           echo "=== Node executable ==="
+
           find runtime/build/rootfs \
             -type f \
             \( -name node -o -name nodejs \) \
@@ -102,13 +62,55 @@ jobs:
 
           echo
           echo "=== Runtime files ==="
+
           find runtime/build/rootfs \
             -type f \
             | sort
 
           echo
           echo "=== Shared libraries ==="
+
           find runtime/build/rootfs \
             -type f \
             \( -name "*.so" -o -name "*.so.*" \) \
             | sort
+
+      - name: Create runtime archive
+        run: |
+          tar -czf \
+            runtime/package/zeus-node-runtime-android-arm64.tar.gz \
+            -C runtime/build/rootfs .
+
+      - name: Generate SHA256
+        run: |
+          cd runtime/package
+
+          sha256sum \
+            zeus-node-runtime-android-arm64.tar.gz \
+            > zeus-node-runtime-android-arm64.sha256
+
+      - name: Verify runtime archive
+        run: |
+          tar -tzf \
+            runtime/package/zeus-node-runtime-android-arm64.tar.gz \
+            | head -100
+
+      - name: Delete existing release
+        run: |
+          gh release delete v0.1.0-runtime \
+            --yes \
+            --cleanup-tag \
+            || true
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Create runtime release
+        run: |
+          gh release create \
+            v0.1.0-runtime \
+            runtime/package/zeus-node-runtime-android-arm64.tar.gz \
+            runtime/package/zeus-node-runtime-android-arm64.sha256 \
+            --title "Zeus Node Runtime v0.1.0" \
+            --notes "Android ARM64 Node.js runtime for Zeus Studio."
+        env:
+          GH_TOKEN: ${{ github.token }}
