@@ -1,0 +1,73 @@
+name: Build Zeus Node Runtime
+
+on:
+  workflow_dispatch:
+
+jobs:
+  runtime:
+    name: Build Android ARM64 Runtime
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            curl \
+            wget \
+            dpkg-dev \
+            file \
+            tar \
+            gzip \
+            xz-utils
+
+      - name: Create runtime directories
+        run: |
+          mkdir -p runtime/build
+          mkdir -p runtime/package
+
+      - name: Download Node ARM64 package
+        run: |
+          curl -L \
+            "https://packages.termux.dev/apt/termux-main/pool/main/n/nodejs/nodejs_26.4.0-1_aarch64.deb" \
+            -o runtime/build/nodejs.deb
+
+      - name: Verify Node package
+        run: |
+          echo "eaf3ed8a6e4b72ebaa8c2cb3bad778c577cdf9ea87ca91761213d8a3940fc090  runtime/build/nodejs.deb" \
+            | sha256sum -c -
+
+      - name: Extract Node package
+        run: |
+          mkdir -p runtime/build/rootfs
+
+          dpkg-deb -x \
+            runtime/build/nodejs.deb \
+            runtime/build/rootfs
+
+      - name: Show runtime
+        run: |
+          find runtime/build/rootfs -maxdepth 5 -type f | sort
+
+      - name: Create runtime archive
+        run: |
+          tar -czf \
+            runtime/package/zeus-node-runtime-android-arm64.tar.gz \
+            -C runtime/build/rootfs .
+
+      - name: Generate SHA256
+        run: |
+          cd runtime/package
+          sha256sum zeus-node-runtime-android-arm64.tar.gz \
+            > zeus-node-runtime-android-arm64.sha256
+
+      - name: Upload runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: zeus-node-runtime-android-arm64
+          path: |
+            runtime/package/zeus-node-runtime-android-arm64.tar.gz
+            runtime/package/zeus-node-runtime-android-arm64.sha256
